@@ -14,7 +14,7 @@ chmod +x Install.sh
 sudo ./Install.sh
 ```
 
-[!INFO]
+> [!NOTE]
 > Tested and confirmed working on Arch & Ubuntu
 
 ##### Notable commands used in scripts
