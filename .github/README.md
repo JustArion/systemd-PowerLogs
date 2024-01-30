@@ -1,6 +1,6 @@
 Logs:
-`$ > systemctl status powerlogs.service`
-or
+<br>`$ > systemctl status powerlogs.service`
+<br>or<br>
 `$ > cat /var/log/powerlogs.log`
 
 ### Install
