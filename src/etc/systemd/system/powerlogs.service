@@ -1,0 +1,12 @@
+[Unit]
+Description=Logs the duration of downtime since the last time the device was powered
+After=systemd-time-wait-sync.service
+
+[Service]
+Type=simple
+Environment="SYSTEMD=1"
+ExecStart=/usr/local/bin/powerlogs
+
+[Install]
+WantedBy=multi-user.target
+Alias=powerlogs.service

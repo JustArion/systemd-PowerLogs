@@ -1,0 +1,101 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:  powerlogs.service
+# Required-Start:  $local_fs $network
+# Required-Stop:  $local_fs $network
+# Default-Start:  2 3 4 5
+# Default-Stop:  $none
+# Short-Description: Monitors the duration of the powered-down state of the system
+### END INIT INFO
+
+stamp_path=/var/log/powerlogs.sta
+log_path=/var/log/powerlogs.log
+
+log_exit() {
+  timestamp=$(get_timestamp)
+  echo "$timestamp | $1" >> $log_path
+  echo "$timestamp | $1"
+  exit
+}
+
+# Partially modified from some stackoverflow post. I forgor which so can't link :c
+if [ -n "$SYSTEMD" ]; then
+  process_lockfile=/var/lock/powerlogs.lock
+  umask 000                  # allow all users to access the file we're about to create
+  exec 9> $process_lockfile  # open lockfile on FD 9, based on basename of argv[0]
+  umask 022                  # move back to more restrictive file permissions
+  flock -x -n 9 || log_exit "Failed to acquire lockfile"      # grab that lock, or exit the script early
+  echo "Enforcing process singleton '$process_lockfile'"
+fi
+
+# We force a resync on the timedatectl in-case the sync-service is disabled
+timedatectl --adjust-system-clock
+
+get_timestamp() {
+  date "+%d %b %Y %I:%M %p"
+}
+
+# $1 - seconds
+format_seconds() {
+  if [ $1 -eq 1 ]; then
+    echo "1 second"
+  else 
+    echo "$1 seconds"
+  fi
+}
+
+# $1 - minutes
+format_minutes() {
+  if [ $1 -eq 1 ]; then
+    echo "1 minute"
+  else
+    echo "$1 minutes"
+  fi
+}
+
+# If there's a timestamp, we check how long it was offline.
+if [ -f $stamp_path ]; then
+  file_date=$(cat $stamp_path)
+  current_date=$(date +%s)
+
+  offline_seconds=$(expr $current_date - $file_date)
+  timestamp=$(get_timestamp)
+
+  # Check if its offline for less than 60 seconds
+  if [ "$offline_seconds" -lt 60 ]; then
+    message="Device was off for $(format_seconds $offline_seconds)"
+  else
+    minutes_offline=$(expr $offline_seconds / 60)
+    message="Device was off for $(format_minutes $minutes_offline)"
+  fi
+
+    echo "$timestamp | $message" >> $log_path
+    echo $message
+fi
+
+# $1 - Content
+# $2 - File path
+# This prevents power interruptions from affecting file writes to the timestamp path.
+safe_write_to_file() {
+  local temp_file=$(mktemp)
+  echo $1 > $temp_file
+  # We allow anyone to view the file
+  # Owner-Group-Public
+  # rw-r--r--
+  # chmod 644 $temp_file
+  chmod u=rw,g=r,o=r $temp_file
+
+  mv $temp_file $2 -f # We use -f(orce) here since the file is LIKELY to already exist and we can't accept any confirmation prompts
+}
+
+# We run the loop here that updates the timestamp
+if [ -n "$SYSTEMD" ]; then
+  echo "Running service loop"
+  while true; do
+    (
+      flock -x 9
+      safe_write_to_file $(date +%s) $stamp_path
+    )
+    sleep 1
+  done
+fi
