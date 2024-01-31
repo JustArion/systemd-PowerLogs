@@ -4,7 +4,7 @@ After=systemd-time-wait-sync.service
 
 [Service]
 Type=simple
-Environment="SYSTEMD=1"
+Environment="SYSTEMD_START=1"
 ExecStart=/usr/local/bin/powerlogs
 
 [Install]

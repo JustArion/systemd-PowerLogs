@@ -19,7 +19,7 @@ log_exit() {
 }
 
 # Partially modified from some stackoverflow post. I forgor which so can't link :c
-if [ -n "$SYSTEMD" ]; then
+if [ -n "$SYSTEMD_START" ]; then
   process_lockfile=/var/lock/powerlogs.lock
   umask 000                  # allow all users to access the file we're about to create
   exec 9> $process_lockfile  # open lockfile on FD 9, based on basename of argv[0]
@@ -58,19 +58,21 @@ if [ -f $stamp_path ]; then
   file_date=$(cat $stamp_path)
   current_date=$(date +%s)
 
+  formatted_file_date=$(date -d @$file_date "+%d %b %I:%M %p")
+
   offline_seconds=$(expr $current_date - $file_date)
   timestamp=$(get_timestamp)
 
   # Check if its offline for less than 60 seconds
   if [ "$offline_seconds" -lt 60 ]; then
-    message="Device was off for $(format_seconds $offline_seconds)"
+    message="Device was off for $(format_seconds $offline_seconds)."
   else
     minutes_offline=$(expr $offline_seconds / 60)
-    message="Device was off for $(format_minutes $minutes_offline)"
+    message="Device was off since [ $formatted_file_date ] for $(format_minutes $minutes_offline)."
   fi
 
     echo "$timestamp | $message" >> $log_path
-    echo $message
+    echo "$message"
 fi
 
 # $1 - Content
@@ -89,7 +91,7 @@ safe_write_to_file() {
 }
 
 # We run the loop here that updates the timestamp
-if [ -n "$SYSTEMD" ]; then
+if [ -n "$SYSTEMD_START" ]; then
   echo "Running service loop"
   while true; do
     (
