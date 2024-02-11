@@ -55,8 +55,8 @@ format_minutes() {
 
 # If there's a timestamp, we check how long it was offline.
 if [ -f $stamp_path ]; then
-  file_date=$(cat $stamp_path)
-  current_date=$(date +%s)
+  file_date=$(stat --format=%Y $stamp_path) #   %Y   time of last data modification, seconds since Epoch
+  current_date=$(date +%s) #   %s   seconds since the Epoch (1970-01-01 00:00 UTC)
 
   formatted_file_date=$(date -d @$file_date "+%d %b %I:%M %p")
 
@@ -75,28 +75,13 @@ if [ -f $stamp_path ]; then
     echo "$message"
 fi
 
-# $1 - Content
-# $2 - File path
-# This prevents power interruptions from affecting file writes to the timestamp path.
-safe_write_to_file() {
-  local temp_file=$(mktemp)
-  echo $1 > $temp_file
-  # We allow anyone to view the file
-  # Owner-Group-Public
-  # rw-r--r--
-  # chmod 644 $temp_file
-  chmod u=rw,g=r,o=r $temp_file
-
-  mv $temp_file $2 -f # We use -f(orce) here since the file is LIKELY to already exist and we can't accept any confirmation prompts
-}
-
 # We run the loop here that updates the timestamp
 if [ -n "$SYSTEMD_START" ]; then
   echo "Running service loop"
   while true; do
     (
       flock -x 9
-      safe_write_to_file $(date +%s) $stamp_path
+      touch $stamp_path
     )
     sleep 1
   done

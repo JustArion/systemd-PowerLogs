@@ -4,7 +4,7 @@ Logs:
 `$ > cat /var/log/powerlogs.log`
 
 ### Install
-Requires
+Requirements
 - sudo
 - git
 
@@ -13,6 +13,8 @@ git clone https://github.com/JustArion/systemd-PowerLogs/ && cd systemd-PowerLog
 chmod +x Install.sh
 sudo ./Install.sh
 ```
+
+You can now safely remove the `systemd-PowerLogs` directory that you cloned.
 
 > [!NOTE]
 > Tested and confirmed working on Arch & Ubuntu
@@ -25,7 +27,6 @@ umask
 flock
 systemctl (& systemd by proxy)
 date
-rm
 ```
 ---
 ### Removal
