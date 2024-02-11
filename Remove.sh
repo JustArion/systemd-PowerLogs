@@ -18,10 +18,10 @@ powerlogs_service=/etc/systemd/system/powerlogs.service
 powerlogs_log=/var/log/powerlogs.log
 powerlogs_timetracker=/var/log/powerlogs.sta
 
-notif "Exec" "systemctl disable powerlogs.service"
-systemctl disable powerlogs.service
-notif "Exec" "systemctl stop powerlogs.service"
-systemctl stop powerlogs.service
+notif "Exec" "systemctl disable powerlogs.service 2> /dev/null"
+systemctl disable powerlogs.service 2> /dev/null
+notif "Exec" "systemctl stop powerlogs.service 2> /dev/null"
+systemctl stop powerlogs.service 2> /dev/null
 
 # We check if the target files exist, and delete them
 if [ -f $powerlogs_script ]; then
